@@ -206,7 +206,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* 超过 100ms 没有有效�? -> 判为离线，�?�道清零并置保护标志 */
     if (rc_online && (HAL_GetTick() - last_rx_time > 100))
     {
       rc_online = 0;
@@ -229,7 +228,6 @@ int main(void)
       rc_data.error_protect = 1;
     }
 
-    // 如果发现不是正在接收状态?（说明因为错误罢工了）
     if (huart3.RxState != HAL_UART_STATE_BUSY_RX) 
     {
         __HAL_UART_CLEAR_OREFLAG(&huart3);
