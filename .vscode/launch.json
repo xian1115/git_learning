@@ -1,0 +1,158 @@
+{
+    // 双击 F5 前先确认：
+    //   1. 板子已上电（电池架开关打开），J-Link 已插好且驱动装好
+    //   2. 选的是 "J-Link (auto)" 这一项（本项目用的就是 J-Link）
+    //   3. executable 必须是 build/week5_test2.elf —— Makefile 里 TARGET = week5_test2
+    //   4. 如果上一次调试异常退出，先在任务管理器里结束残留的 JLinkGDBServerCL.exe，
+    //      它占着 50000 端口会锁住探针，导致下一次 F5 一直连不上
+    //   5. F5 烧录完成后程序自动全速运行（postLaunchCommands: continue），
+    //      不需要再手动按"继续"；调试会话别同时开 Ozone，两个调试器会抢探针
+    "version": "0.2.0",
+
+    "configurations": [
+
+        // ============================================================
+        // 1. J-Link —— 由 Cortex-Debug 自动拉起 GDB Server（推荐）
+        // ============================================================
+        {
+            "name": "J-Link (auto)",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/week5_test2.elf",
+
+            "request": "launch",
+            "type": "cortex-debug",
+
+            // 目标 MCU：RoboMaster C 板 = STM32F407IGH6
+            "device": "STM32F407IG",
+
+            "servertype": "jlink",
+            "serverpath": "D:/STM32/jlink_tools/JLink_V956/JLinkGDBServerCL.exe",
+
+            // C 板调试口是 SWD
+            "interface": "swd",
+
+            // 外设寄存器视图。若报 “找不到文件”，把这一行注释掉即可，不影响下载运行。
+            "svdFile": "D:/STM32/vscode/STM32F407.svd",
+
+            // 下载后自动全速运行，不再停在 main —— 之前多次“变量全是 0”就是停在这里没按继续
+            "postLaunchCommands": ["continue"],
+
+            // 运行中实时查看变量（本项目看 tx_ok_cnt / rx_cnt / boot_stage / real_current）
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+
+            "debuggerArgs": [
+                "-iex",
+                "set debug-file-directory ${workspaceFolder}/.gdb-debug"
+            ],
+
+            // 必须与 tasks.json 里的 "label" 完全一致
+            "preLaunchTask": "build task"
+        },
+
+        // ============================================================
+        // 2. J-Link —— 手动先开 GDB Server 再连（自动那项连不上时用）
+        //    先在终端执行：
+        //      JLinkGDBServerCL.exe -device STM32F407IG -if SWD -speed 4000 -port 50000
+        //    等到出现 "Waiting for GDB connection"，再按 F5
+        // ============================================================
+        {
+            "name": "J-Link (manual)",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/week5_test2.elf",
+
+            "request": "launch",
+            "type": "cortex-debug",
+
+            "device": "STM32F407IG",
+            "servertype": "external",
+            "gdbTarget": "127.0.0.1:50000",
+            "svdFile": "D:/STM32/vscode/STM32F407.svd",
+            "postLaunchCommands": ["continue"],
+
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+
+            "debuggerArgs": [
+                "-iex",
+                "set debug-file-directory ${workspaceFolder}/.gdb-debug"
+            ],
+
+            "preLaunchTask": "build task"
+        },
+
+        // ============================================================
+        // 3. ST-Link（备用，走 OpenOCD）
+        // ============================================================
+        {
+            "name": "ST-Link",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/week5_test2.elf",
+
+            "request": "launch",
+            "type": "cortex-debug",
+
+            "device": "STM32F407IG",
+            "svdFile": "D:/STM32/vscode/STM32F407.svd",
+
+            "servertype": "openocd",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
+
+            "postLaunchCommands": ["continue"],
+
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+
+            "debuggerArgs": [
+                "-iex",
+                "set debug-file-directory ${workspaceFolder}/.gdb-debug"
+            ],
+
+            "preLaunchTask": "build task"
+        },
+
+        // ============================================================
+        // 4. DAPLink / CMSIS-DAP（备用，走 OpenOCD）
+        // ============================================================
+        {
+            "name": "DAPLink",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}/build/week5_test2.elf",
+
+            "request": "launch",
+            "type": "cortex-debug",
+
+            "device": "STM32F407IG",
+            "svdFile": "D:/STM32/vscode/STM32F407.svd",
+
+            "servertype": "openocd",
+            "configFiles": [
+                "interface/cmsis-dap.cfg",
+                "target/stm32f4x.cfg"
+            ],
+
+            "postLaunchCommands": ["continue"],
+
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            },
+
+            "debuggerArgs": [
+                "-iex",
+                "set debug-file-directory ${workspaceFolder}/.gdb-debug"
+            ],
+
+            "preLaunchTask": "build task"
+        }
+    ]
+}
